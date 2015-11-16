@@ -4,7 +4,8 @@ Material::Material():
     ambient(1.0f),
     diffuse(1.0f),
     specular(1.0f),
-    glossiness(10.0f)
+    glossiness(10.0f),
+    reflection(0.0f)
   {}
 
 Object::Object(const glm::mat4 &transform, const Material &material):

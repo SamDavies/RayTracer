@@ -3,6 +3,11 @@
 int windowX = 640;
 int windowY = 480;
 
+// Lighting constants
+const glm::vec3 lightPosition(0, 12, -6);
+const glm::vec3 lightIntensity(1, 1, 1);
+const float specularIntensity = 10.0;
+
 /*
 ** std::vector is a data format similar with list in most of  script language, which allows users to change its size after claiming.
 ** The difference is that std::vector is based on array rather than list, so it is not so effective when you try to insert a new element, but faster while calling for values randomly or add elements by order.
@@ -26,11 +31,62 @@ void cleanup() {
 **
 */
 bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
-	return true;
-	//You need to add your own solution for this funtion, to replace the 'return true'.
-	//Runing the function Intersect() of each of the objects would be one of the options.
-	//Each time when intersect happens, the payload of ray will need to be updated, but that's no business of this function.
-	//To make it clear, keyword const prevents the function from changing parameter ray.
+	IntersectInfo closestObjectInfo;
+	closestObjectInfo.time = LONG_MAX;
+	bool intersects = false;
+	// Check for intersection with all objects
+	for (int i=0; i<objects.size(); i++) {
+			IntersectInfo currentInfo;
+			if (objects[i]->Intersect(ray, currentInfo)) {
+					// find the object closest to the origin of the ray
+					if (currentInfo.time < closestObjectInfo.time) {
+							intersects = true;
+							closestObjectInfo = currentInfo;
+					}
+			}
+	}
+	// save the closest object info
+	info = closestObjectInfo;
+	return intersects;
+}
+
+glm::vec3 GetColor(const Ray &ray, IntersectInfo &info){
+	glm::vec3 color;
+	glm::vec3 specular;
+	glm::vec3 diffuse;
+	glm::vec3 ambient;
+
+	glm::vec3 surfaceNorm = info.normal;
+	glm::vec3 lightVec = glm::normalize(lightPosition - info.hitPoint);
+	glm::vec3 camPos = glm::normalize(ray.origin - info.hitPoint);
+	// use max to clamp the cosAlpha above 0
+	float cosAlpha = glm::dot(((2.0f * surfaceNorm * glm::dot(lightVec, surfaceNorm)) - lightVec), camPos);
+	cosAlpha = fmax(0.0f, cosAlpha);
+
+	float glossMutiplier = pow(cosAlpha, info.material->glossiness);
+	specular.x = lightIntensity.x * info.material->specular.x * glossMutiplier;
+	specular.y = lightIntensity.y * info.material->specular.y * glossMutiplier;
+	specular.z = lightIntensity.z * info.material->specular.z * glossMutiplier;
+
+	float angleToLight = glm::dot(lightVec, surfaceNorm);
+	diffuse.x = lightIntensity.x * info.material->diffuse.x * angleToLight;
+	diffuse.y = lightIntensity.y * info.material->diffuse.y * angleToLight;
+	diffuse.z = lightIntensity.z * info.material->diffuse.z * angleToLight;
+
+	// use max to clamp the diffuse above 0
+	diffuse.x = fmax(0.0f, diffuse.x);
+	diffuse.y = fmax(0.0f, diffuse.y);
+	diffuse.z = fmax(0.0f, diffuse.z);
+
+	ambient.x = lightIntensity.x * info.material->ambient.x;
+	ambient.y = lightIntensity.y * info.material->ambient.y;
+	ambient.z = lightIntensity.z * info.material->ambient.z;
+
+	color.x = specular.x + diffuse.x + ambient.x;
+	color.y = specular.y + diffuse.y + ambient.y;
+	color.z = specular.z + diffuse.z + ambient.z;
+
+	return color;
 }
 
 /*
@@ -44,21 +100,17 @@ bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 */
 //	The function CastRay() will have to deal with light(), shadow() and reflection(). The impement of them would also be important.
 float CastRay(Ray &ray, Payload &payload) {
-
 	IntersectInfo info;
 
-	if (CheckIntersection(ray,info)) {
+	if (CheckIntersection(ray, info)) {
 		/* TODO: Set payload color based on object materials, not direction */
-		payload.color = ray.direction;
-		// In this case, it's just because we want to show something and we do not want to show the same color for every pixel.
-		// Usually payload.color will be decided by the bounces.
+		payload.color = GetColor(ray, info);
 		return info.time;
 	}
-	else{
-		payload.color = glm::vec3(0.0f);
-		// The Ray from camera hits nothing so nothing will be seen. In this case, the pixel should be totally black.
-		return -1.0f;
-	}
+
+	// The Ray from camera hits nothing so nothing will be seen. In this case, the pixel should be totally black.
+	payload.color = glm::vec3(0.0f, 0.0f, 0.0f);
+	return -1.0f;
 }
 
 
@@ -129,10 +181,10 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(Render);
 
 	// this can be used as a global transform for every object if I'm feeling lazy
-	glm::mat4 transform1(1.0f);
-	
+	glm::mat4 transform1(0.0f);
+
 	Material sphere1Mat = Material(glm::vec3(0.4, 0.4, 0.4), glm::vec3(0.1, 0, 0.3), glm::vec3(0.01, 0, 0.03), 50, 0.2);
-	Sphere sphere2(transform1, sphere1Mat, glm::vec3(3,-2.5,-25), 3.0);
+	Sphere sphere2(transform1, sphere1Mat, glm::vec3(0,-2.5,0), 3.0);
 
 	// use this to push objects into the vector
 	objects.push_back(&sphere2);

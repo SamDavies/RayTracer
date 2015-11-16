@@ -22,9 +22,9 @@ class Object {
     Object(const glm::mat4 &transform = glm::mat4(1.0f), const Material &material = Material());
     //  The keyword const here will check the type of the parameters and make sure no changes are made
     //  to them in the function. It's not necessary but better for robustness
-
     virtual bool Intersect(const Ray &ray, IntersectInfo &info) const { return true; }
     glm::vec3 Position() const { return glm::vec3(transform[3][0], transform[3][1], transform[3][2]); }
+
     const Material *MaterialPtr() const { return &material; }
     const Object *ObjectPtr() const { return this; }
 
@@ -39,7 +39,6 @@ class Object {
 //  Actually, it's also possible to use some other objects, but those geometries are easy to describe and the intersects are easier to calculate.
 //  Try something else if you like, for instance, a box?
 
-/* TODO: Implement */
 class Sphere : public Object {
 
   glm::vec3 origin;
