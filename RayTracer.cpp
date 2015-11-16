@@ -52,9 +52,6 @@ bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 
 glm::vec3 GetPhongColor(const Ray &ray, IntersectInfo &info){
 	glm::vec3 color;
-	glm::vec3 specular;
-	glm::vec3 diffuse;
-	glm::vec3 ambient;
 
 	glm::vec3 surfaceNorm = info.normal;
 	glm::vec3 lightVec = glm::normalize(lightPosition - info.hitPoint);
@@ -62,31 +59,18 @@ glm::vec3 GetPhongColor(const Ray &ray, IntersectInfo &info){
 	// use max to clamp the cosAlpha above 0
 	float cosAlpha = glm::dot(((2.0f * surfaceNorm * glm::dot(lightVec, surfaceNorm)) - lightVec), camPos);
 	cosAlpha = fmax(0.0f, cosAlpha);
-
 	float glossMutiplier = pow(cosAlpha, info.material->glossiness);
-	specular.x = lightIntensity.x * info.material->specular.x * glossMutiplier;
-	specular.y = lightIntensity.y * info.material->specular.y * glossMutiplier;
-	specular.z = lightIntensity.z * info.material->specular.z * glossMutiplier;
 
-	float angleToLight = glm::dot(lightVec, surfaceNorm);
-	diffuse.x = lightIntensity.x * info.material->diffuse.x * angleToLight;
-	diffuse.y = lightIntensity.y * info.material->diffuse.y * angleToLight;
-	diffuse.z = lightIntensity.z * info.material->diffuse.z * angleToLight;
+	glm::vec3 ambient = info.material->ambient;
+	glm::vec3 diffuse = info.material->diffuse * glm::dot(lightVec, surfaceNorm);
+	glm::vec3 specular = info.material->specular * glossMutiplier;
 
 	// use max to clamp the diffuse above 0
 	diffuse.x = fmax(0.0f, diffuse.x);
 	diffuse.y = fmax(0.0f, diffuse.y);
 	diffuse.z = fmax(0.0f, diffuse.z);
 
-	ambient.x = lightIntensity.x * info.material->ambient.x;
-	ambient.y = lightIntensity.y * info.material->ambient.y;
-	ambient.z = lightIntensity.z * info.material->ambient.z;
-
-	color.x = specular.x + diffuse.x + ambient.x;
-	color.y = specular.y + diffuse.y + ambient.y;
-	color.z = specular.z + diffuse.z + ambient.z;
-
-	return color;
+	return lightIntensity * (specular + diffuse + ambient);
 }
 
 /*
