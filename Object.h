@@ -11,8 +11,8 @@ class Material {
     float glossiness; //Specular intensity
     float reflection;
 
-    Material(glm::vec3 ka, glm::vec3 kd, glm::vec3 ks, float gloss, float refl)
-      :ambient(ka) ,diffuse(kd) ,specular(ks) ,glossiness(gloss) ,reflection(refl)
+    Material(glm::vec3 amb, glm::vec3 diff, glm::vec3 spec, float gloss, float refl)
+      :ambient(amb) ,diffuse(diff) ,specular(spec) ,glossiness(gloss) ,reflection(refl)
       {}
 };
 

@@ -4,9 +4,10 @@ int windowX = 640;
 int windowY = 480;
 
 // Lighting constants
-const glm::vec3 lightPosition(-10, 10, 0);
+const glm::vec3 lightPosition(-150, 300, 10);
 const glm::vec3 lightIntensity(1, 1, 1);
 const float specularIntensity = 10.0;
+const float EPSILON = 0.01;
 
 /*
 ** std::vector is a data format similar with list in most of  script language, which allows users to change its size after claiming.
@@ -87,7 +88,18 @@ float CastRay(Ray &ray, Payload &payload) {
 	IntersectInfo info;
 
 	if (CheckIntersection(ray, info)) {
-		/* TODO: Set payload color based on object materials, not direction */
+
+		IntersectInfo shadowInfo;
+		Ray lightRay = Ray(info.hitPoint, glm::normalize(lightPosition - info.hitPoint));
+		glm::vec3 floatOffset = lightRay(EPSILON); // adjust for floating point inaccuracies
+		Ray shadowRay = Ray(floatOffset, glm::normalize(lightPosition - floatOffset));
+
+		// if the object is in shadow then only use ambient light
+		if (CheckIntersection(shadowRay, shadowInfo)) {
+			payload.color = info.material->ambient;
+			return info.time;
+		}
+
 		payload.color = GetPhongColor(ray, info);
 		return info.time;
 	}
@@ -168,12 +180,12 @@ int main(int argc, char **argv) {
 	glm::mat4 transform1(0.0f);
 
 	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.4, 0.4, 0.4), 20, 0.2);
-	Sphere sphere1(transform1, glossGreen, glm::vec3(0, -2, 0), 2.0);
+	Sphere sphere1(transform1, glossGreen, glm::vec3(140, -170, -150), 30.0);
 
 	Material whiteWall = Material(glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.0, 0.0, 0.0), 20, 0.2);
-	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -6), glm::vec3(0, 0, 1));
-	Plane plane2(transform1, whiteWall, glm::vec3(8, 0, 0), glm::vec3(-1, 0, 0));
-	Plane plane3(transform1, whiteWall, glm::vec3(0, -4, 0), glm::vec3(0, 1, 0));
+	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -200), glm::vec3(0, 0, 1));
+	Plane plane2(transform1, whiteWall, glm::vec3(200, 0, 0), glm::vec3(-1, 0, 0));
+	Plane plane3(transform1, whiteWall, glm::vec3(0, -200, 0), glm::vec3(0, 1, 0));
 
 	// use this to push objects into the vector
 	objects.push_back(&sphere1);
