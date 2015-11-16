@@ -50,7 +50,7 @@ bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 	return intersects;
 }
 
-glm::vec3 GetColor(const Ray &ray, IntersectInfo &info){
+glm::vec3 GetPhongColor(const Ray &ray, IntersectInfo &info){
 	glm::vec3 color;
 	glm::vec3 specular;
 	glm::vec3 diffuse;
@@ -104,7 +104,7 @@ float CastRay(Ray &ray, Payload &payload) {
 
 	if (CheckIntersection(ray, info)) {
 		/* TODO: Set payload color based on object materials, not direction */
-		payload.color = GetColor(ray, info);
+		payload.color = GetPhongColor(ray, info);
 		return info.time;
 	}
 
