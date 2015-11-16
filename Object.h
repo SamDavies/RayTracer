@@ -11,8 +11,8 @@ class Material {
     float glossiness; //Specular intensity
     float reflection;
 
-    Material(glm::vec3 ks, glm::vec3 kd, glm::vec3 ka, float gloss, float refl)
-      :specular(ks) ,diffuse(kd) ,ambient(ka) ,glossiness(gloss) ,reflection(refl)
+    Material(glm::vec3 ka, glm::vec3 kd, glm::vec3 ks, float gloss, float refl)
+      :ambient(ka) ,diffuse(kd) ,specular(ks) ,glossiness(gloss) ,reflection(refl)
       {}
 };
 
@@ -40,7 +40,6 @@ class Object {
 //  Try something else if you like, for instance, a box?
 
 class Sphere : public Object {
-
   glm::vec3 origin;
   float radius;
 
@@ -50,12 +49,20 @@ class Sphere : public Object {
       ,origin(orn)
       ,radius(rad)
       {}
-    virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;  //  To figure out if the Ray hit this object.
+    virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;
 };
 
-/* TODO: Implement */
 class Plane : public Object {
+  glm::vec3 point;
+  glm::vec3 normal;
+
   public:
+    Plane(const glm::mat4 &transform, const Material &material, glm::vec3 pt, glm::vec3 norm)
+      : Object(transform, material)
+      , point(pt)
+      , normal(glm::normalize(norm))
+      {}
+
     virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;
 };
 

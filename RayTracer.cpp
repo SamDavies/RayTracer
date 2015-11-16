@@ -4,7 +4,7 @@ int windowX = 640;
 int windowY = 480;
 
 // Lighting constants
-const glm::vec3 lightPosition(0, 12, -6);
+const glm::vec3 lightPosition(-10, 10, 0);
 const glm::vec3 lightIntensity(1, 1, 1);
 const float specularIntensity = 10.0;
 
@@ -167,11 +167,19 @@ int main(int argc, char **argv) {
 	// this can be used as a global transform for every object if I'm feeling lazy
 	glm::mat4 transform1(0.0f);
 
-	Material sphere1Mat = Material(glm::vec3(0.4, 0.4, 0.4), glm::vec3(0.1, 0, 0.3), glm::vec3(0.01, 0, 0.03), 50, 0.2);
-	Sphere sphere2(transform1, sphere1Mat, glm::vec3(0,-2.5,0), 3.0);
+	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.4, 0.4, 0.4), 20, 0.2);
+	Sphere sphere1(transform1, glossGreen, glm::vec3(0, -2, 0), 2.0);
+
+	Material whiteWall = Material(glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.0, 0.0, 0.0), 20, 0.2);
+	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -6), glm::vec3(0, 0, 1));
+	Plane plane2(transform1, whiteWall, glm::vec3(8, 0, 0), glm::vec3(-1, 0, 0));
+	Plane plane3(transform1, whiteWall, glm::vec3(0, -4, 0), glm::vec3(0, 1, 0));
 
 	// use this to push objects into the vector
-	objects.push_back(&sphere2);
+	objects.push_back(&sphere1);
+	objects.push_back(&plane1);
+	objects.push_back(&plane2);
+	objects.push_back(&plane3);
 
 	atexit(cleanup);
 	glutMainLoop();

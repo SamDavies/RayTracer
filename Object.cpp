@@ -46,10 +46,25 @@ bool Sphere::Intersect(const Ray &ray, IntersectInfo &info) const {
 
   return true;
 }
-// Function glm::dot(x,y) will return the dot product of parameters. (It's the inner product of vectors)
 
-/* TODO: Implement */
-bool Plane::Intersect(const Ray &ray, IntersectInfo &info) const { return -1.0f; }
+bool Plane::Intersect(const Ray &ray, IntersectInfo &info) const {
+  float angle = glm::dot(ray.direction, normal);
+  // this prevents divide by 0 error
+  if (angle != 0) {
+    float depth = glm::dot((point - ray.origin), normal) / angle;
+    // check if the intercection is infront of the camera
+    if (depth > 0) {
+      info.hitPoint = ray.origin + depth * ray.direction;
+      info.normal = normal;
+      info.material = MaterialPtr();
+      info.time = glm::length(ray.origin - info.hitPoint);
+      return true;
+    }
+    // here the intercection is behind the camera
+    return false;
+  }
+  return false;
+}
 
 /* TODO: Implement */
 bool Triangle::Intersect(const Ray &ray, IntersectInfo &info) const { return -1.0f; }
