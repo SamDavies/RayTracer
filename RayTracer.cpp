@@ -21,13 +21,13 @@ void cleanup() {
 ** TODO: Function for testing intersection against all the objects in the scene
 **
 ** If an object is hit then the IntersectionInfo object should contain
-** the information about the intersection. Returns true if any object is hit, 
+** the information about the intersection. Returns true if any object is hit,
 ** false otherwise
-** 
+**
 */
 bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 	return true;
-	//You need to add your own solution for this funtion, to replace the 'return true'.	
+	//You need to add your own solution for this funtion, to replace the 'return true'.
 	//Runing the function Intersect() of each of the objects would be one of the options.
 	//Each time when intersect happens, the payload of ray will need to be updated, but that's no business of this function.
 	//To make it clear, keyword const prevents the function from changing parameter ray.
@@ -36,7 +36,7 @@ bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 /*
 ** TODO: Recursive ray-casting function. It might be the most important Function in this demo cause it's the one decides the color of pixels.
 **
-** This function is called for each pixel, and each time a ray is reflected/used 
+** This function is called for each pixel, and each time a ray is reflected/used
 ** for shadow testing. The Payload object can be used to record information about
 ** the ray trace such as the current color and the number of bounces performed.
 ** This function should return either the time of intersection with an object
@@ -57,8 +57,8 @@ float CastRay(Ray &ray, Payload &payload) {
 	else{
 		payload.color = glm::vec3(0.0f);
 		// The Ray from camera hits nothing so nothing will be seen. In this case, the pixel should be totally black.
-		return -1.0f;	
-	}	
+		return -1.0f;
+	}
 }
 
 
@@ -78,13 +78,13 @@ void Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clear OpenGL Window
 
-	//	Three parameters of lookat(vec3 eye, vec3 center, vec3 up).	
+	//	Three parameters of lookat(vec3 eye, vec3 center, vec3 up).
 	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(-10.0f,10.0f,10.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
 	glm::mat4 projMatrix = glm::perspective(45.0f, (float)windowX / (float)windowY, 1.0f, 10000.0f);
 
 	glBegin(GL_POINTS);	//Using GL_POINTS mode. In this mode, every vertex specified is a point.
 	//	Reference https://en.wikibooks.org/wiki/OpenGL_Programming/GLStart/Tut3 if interested.
-  
+
 	for(int x = 0; x < windowX; ++x)
 		for(int y = 0; y < windowY; ++y){//Cover the entire display zone pixel by pixel, but without showing.
 			float pixelX =  2*((x+0.5f)/windowX)-1;	//Actually, (pixelX, pixelY) are the relative position of the point(x, y).
@@ -101,14 +101,14 @@ void Render()
 
 			if(CastRay(ray,payload) > 0.0f){
 				glColor3f(payload.color.x,payload.color.y,payload.color.z);
-			} 
+			}
 			else {
 				glColor3f(1,0,0);
 			}
 
 			glVertex3f(pixelX,pixelY,0.0f);
 		}
-  
+
 	glEnd();
 	glFlush();
 }
@@ -122,15 +122,20 @@ int main(int argc, char **argv) {
 
 	//Create the window for drawing
 	glutCreateWindow("RayTracer");
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
 	//Set the function demoDisplay (defined above) as the function that
 	//is called when the window must display.
 	glutDisplayFunc(Render);
-  
-	//	TODO: Add Objects to scene
-	//	This part is related to function CheckIntersection().
-	//	Being added into scene means that the object will take part in the intersection checking, so try to make these two connected to each other.
+
+	// this can be used as a global transform for every object if I'm feeling lazy
+	glm::mat4 transform1(1.0f);
+	
+	Material sphere1Mat = Material(glm::vec3(0.4, 0.4, 0.4), glm::vec3(0.1, 0, 0.3), glm::vec3(0.01, 0, 0.03), 50, 0.2);
+	Sphere sphere2(transform1, sphere1Mat, glm::vec3(3,-2.5,-25), 3.0);
+
+	// use this to push objects into the vector
+	objects.push_back(&sphere2);
 
 	atexit(cleanup);
 	glutMainLoop();

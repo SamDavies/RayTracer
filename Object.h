@@ -10,6 +10,10 @@ class Material {
     glm::vec3 specular;
     float glossiness; //Specular intensity
     float reflection;
+
+    Material(glm::vec3 ks, glm::vec3 kd, glm::vec3 ka, float gloss, float refl)
+      :specular(ks) ,diffuse(kd) ,ambient(ka) ,glossiness(gloss) ,reflection(refl)
+      {}
 };
 
 // The father class of all the objects displayed. Some features would be shared between objects, others will be overloaded.
@@ -42,10 +46,11 @@ class Sphere : public Object {
   float radius;
 
   public:
-    Sphere(const glm::mat4 &transform, const Material &material, glm::vec3 _origin, float _radius) : Object(transform, material) {
-        origin = _origin;
-        radius = _radius;
-    }
+    Sphere(const glm::mat4 &transform, const Material &material, glm::vec3 orn, float rad)
+      :Object(transform, material)
+      ,origin(orn)
+      ,radius(rad)
+      {}
     virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;  //  To figure out if the Ray hit this object.
 };
 

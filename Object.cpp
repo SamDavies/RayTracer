@@ -22,39 +22,38 @@ bool Sphere::Intersect(const Ray &ray, IntersectInfo &info) const {
   float c = glm::dot((ray.origin - origin), (ray.origin - origin)) - pow(radius, 2);
   float discriminant = pow(b, 2) - 4*a*c;
 
-  // if(discriminant < 0){
-  //   // here the ray did not intersect with the object
-  //   return false;
-  // }
-  //
-  // else if (discriminant == 0){
-  //   // here the ray hit the sphere on the very edge
-  //   float depth = -b / (2.0f*a);
-  //   // ignore intersection if it is behind the camera
-  //   if(depth < 0){
-  //     return false;
-  //   }
-  //   info.hitPoint = ray.origin + (depth * ray.direction);
-  // }
-  //
-  // else if (discriminant > 0){
-  //   // here the ray passes through 2 surfaces of the sphere
-  //   // we want to use the closest intersection point and since the sqrt is always positive,
-  //   // we can just use the negative version of the quadratic solution function.
-  //   float depth = (-b -sqrt(discriminant)) / (2.0f*a);
-  //   // ignore intersection if it is behind the camera
-  //   // we make the assumption that if we are on the inside of the object then it is not displayed
-  //   if(depth < 0){
-  //     return false;
-  //   }
-  //   info.hitPoint = ray.origin + (depth * ray.direction);
-  // }
-  //
-  // info.material = MaterialPtr();
-  // info.object = ObjectPtr();
-  // // calculate the normal on the sphere where the ray intersects it
-  // info.normal = glm::normalize(info.hitPoint - origin);
-  // info.time = glm::length(ray.origin - info.hitPoint);
+  if(discriminant < 0){
+    // here the ray did not intersect with the object
+    return false;
+  }
+
+  else if (discriminant == 0){
+    // here the ray hit the sphere on the very edge
+    float depth = -b / (2.0f*a);
+    // ignore intersection if it is behind the camera
+    if(depth < 0){
+      return false;
+    }
+    info.hitPoint = ray.origin + (depth * ray.direction);
+  }
+
+  else if (discriminant > 0){
+    // here the ray passes through 2 surfaces of the sphere
+    // we want to use the closest intersection point and since the sqrt is always positive,
+    // we can just use the negative version of the quadratic solution function.
+    float depth = (-b -sqrt(discriminant)) / (2.0f*a);
+    // ignore intersection if it is behind the camera
+    // we make the assumption that if we are on the inside of the object then it is not displayed
+    if(depth < 0){
+      return false;
+    }
+    info.hitPoint = ray.origin + (depth * ray.direction);
+  }
+
+  info.material = MaterialPtr();
+  // calculate the normal on the sphere where the ray intersects it
+  info.normal = glm::normalize(info.hitPoint - origin);
+  info.time = glm::length(ray.origin - info.hitPoint);
 
   return true;
 }
