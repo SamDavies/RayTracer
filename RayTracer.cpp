@@ -11,8 +11,11 @@ const float EPSILON = 0.01;
 const int REFLECTION_LIMIT = 6;
 
 /*
-** std::vector is a data format similar with list in most of  script language, which allows users to change its size after claiming.
-** The difference is that std::vector is based on array rather than list, so it is not so effective when you try to insert a new element, but faster while calling for values randomly or add elements by order.
+** std::vector is a data format similar with list in most of  script language,
+** which allows users to change its size after claiming.
+** The difference is that std::vector is based on array rather than list,
+** so it is not so effective when you try to insert a new element,
+** but faster while calling for values randomly or add elements by order.
 */
 std::vector<Object*> objects;
 
@@ -38,14 +41,14 @@ bool CheckIntersection(const Ray &ray, IntersectInfo &info) {
 	bool intersects = false;
 	// Check for intersection with all objects
 	for (int i=0; i<objects.size(); i++) {
-			IntersectInfo currentInfo;
-			if (objects[i]->Intersect(ray, currentInfo)) {
-					// find the object closest to the origin of the ray
-					if (currentInfo.time < closestObjectInfo.time) {
-							intersects = true;
-							closestObjectInfo = currentInfo;
-					}
+		IntersectInfo currentInfo;
+		if (objects[i]->Intersect(ray, currentInfo)) {
+			// find the object closest to the origin of the ray
+			if (currentInfo.time < closestObjectInfo.time) {
+				intersects = true;
+				closestObjectInfo = currentInfo;
 			}
+		}
 	}
 	// save the closest object info
 	info = closestObjectInfo;
@@ -75,6 +78,24 @@ glm::vec3 GetPhongColor(const Ray &ray, IntersectInfo &info){
 	return lightIntensity * (specular + diffuse + ambient);
 }
 
+bool Shadow(const glm::vec3 shadowOrigin) {
+	IntersectInfo shadowInfo;
+	Ray shadowRayRaw = Ray(shadowOrigin, glm::normalize(lightPosition - shadowOrigin));
+	// adjust for floating point inaccuracies
+	Ray shadowRay = Ray(shadowRayRaw(EPSILON), glm::normalize(lightPosition - shadowRayRaw(EPSILON)));
+
+	// only look for shadows up unitl the light source
+	float lengthToLight = glm::length(lightPosition - shadowOrigin);
+    for (int i=0; i<objects.size(); i++) {
+        if (objects[i]->Intersect(shadowRay, shadowInfo)) {
+            if (shadowInfo.time < lengthToLight) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 /*
 ** TODO: Recursive ray-casting function. It might be the most important Function in this demo cause it's the one decides the color of pixels.
 **
@@ -89,20 +110,14 @@ float CastRay(Ray &ray, Payload &payload) {
 	IntersectInfo info;
 
 	if (CheckIntersection(ray, info)) {
-
-		IntersectInfo shadowInfo;
-		Ray shadowRayRaw = Ray(info.hitPoint, glm::normalize(lightPosition - info.hitPoint));
-		// adjust for floating point inaccuracies
-		Ray shadowRay = Ray(shadowRayRaw(EPSILON), glm::normalize(lightPosition - shadowRayRaw(EPSILON)));
+		glm::vec3 surfaceColour;
 
 		// if the object is in shadow then only use ambient light
-		if (CheckIntersection(shadowRay, shadowInfo)) {
-			payload.color = info.material->ambient;
-			return info.time;
+		if (Shadow(info.hitPoint)) {
+			surfaceColour = info.material->ambient;
+		} else {
+			surfaceColour = GetPhongColor(ray, info);
 		}
-
-		// find the surface colour
-		glm::vec3 surfaceColour = GetPhongColor(ray, info);
 
 		// calculate the reflection
 		payload.numBounces += 1;
@@ -115,8 +130,8 @@ float CastRay(Ray &ray, Payload &payload) {
 		Ray reflectionRay = Ray(reflectionRayRaw(EPSILON), glm::normalize(refelectionDirection));
 
 		if (payload.numBounces < REFLECTION_LIMIT) {
-				float reflectionTime = CastRay(reflectionRay, payload);
-				reflectionColour = payload.color;
+			float reflectionTime = CastRay(reflectionRay, payload);
+			reflectionColour = payload.color;
 		}
 
 		// merge the reflection and the surface colours
@@ -200,10 +215,10 @@ int main(int argc, char **argv) {
 	// this can be used as a global transform for every object if I'm feeling lazy
 	glm::mat4 transform1(0.0f);
 
-	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.4, 0.4, 0.4), 20, 0.0);
+	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.5, 0.5, 0.5), 60, 0.0);
 	Sphere sphere1(transform1, glossGreen, glm::vec3(140, -170, -150), 30.0);
 
-	Material whiteWall = Material(glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.0, 0.0, 0.0), 20, 0.5);
+	Material whiteWall = Material(glm::vec3(0.03, 0.03, 0.03), glm::vec3(1.0, 1.0, 1.0), glm::vec3(0.5, 0.5, 0.5), 20, 0.5);
 	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -200), glm::vec3(0, 0, 1));
 	Plane plane2(transform1, whiteWall, glm::vec3(200, 0, 0), glm::vec3(-1, 0, 0));
 	Plane plane3(transform1, whiteWall, glm::vec3(0, -200, 0), glm::vec3(0, 1, 0));
