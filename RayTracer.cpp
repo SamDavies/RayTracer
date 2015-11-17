@@ -28,8 +28,7 @@ void cleanup() {
 }
 
 /*
-** TODO: Function for testing intersection against all the objects in the scene
-**
+** Function for testing intersection against all the objects in the scene
 ** If an object is hit then the IntersectionInfo object should contain
 ** the information about the intersection. Returns true if any object is hit,
 ** false otherwise
@@ -78,10 +77,10 @@ glm::vec3 GetPhongColor(const Ray &ray, IntersectInfo &info){
 	return lightIntensity * (specular + diffuse + ambient);
 }
 
-bool Shadow(const glm::vec3 shadowOrigin) {
+bool InShadow(const glm::vec3 shadowOrigin) {
 	IntersectInfo shadowInfo;
 	Ray shadowRayRaw = Ray(shadowOrigin, glm::normalize(lightPosition - shadowOrigin));
-	// adjust for floating point inaccuracies
+	// fix for floating point inaccuracies
 	Ray shadowRay = Ray(shadowRayRaw(EPSILON), glm::normalize(lightPosition - shadowRayRaw(EPSILON)));
 
 	// only look for shadows up unitl the light source
@@ -96,9 +95,28 @@ bool Shadow(const glm::vec3 shadowOrigin) {
     return false;
 }
 
+glm::vec3 GetReflectionColor(const Ray &ray, const IntersectInfo &info, Payload &payload, const glm::vec3 surfaceColour) {
+	// calculate the reflection, we can just reuse the same payload object
+	payload.numBounces += 1;
+	// initialise to the surface color
+
+	glm::vec3 refelectionDirection = ray.direction - 2*(glm::dot(ray.direction, info.normal)) * info.normal;
+	Ray reflectionRayRaw = Ray(info.hitPoint, glm::normalize(refelectionDirection));
+	// fix for floating point inaccuracies
+	Ray reflectionRay = Ray(reflectionRayRaw(EPSILON), glm::normalize(refelectionDirection));
+
+	if (payload.numBounces < REFLECTION_LIMIT) {
+		float reflectionTime = CastRay(reflectionRay, payload);
+		// merge the base colour and the reflection together
+		float reflectivity = info.material->reflection;
+		return (reflectivity * payload.color) + ((1-reflectivity) * surfaceColour);
+	}
+	// default to the origional color
+	return surfaceColour;
+}
+
 /*
-** TODO: Recursive ray-casting function. It might be the most important Function in this demo cause it's the one decides the color of pixels.
-**
+** Recursive ray-casting function. It might be the most important Function in this demo cause it's the one decides the color of pixels.
 ** This function is called for each pixel, and each time a ray is reflected/used
 ** for shadow testing. The Payload object can be used to record information about
 ** the ray trace such as the current color and the number of bounces performed.
@@ -113,30 +131,15 @@ float CastRay(Ray &ray, Payload &payload) {
 		glm::vec3 surfaceColour;
 
 		// if the object is in shadow then only use ambient light
-		if (Shadow(info.hitPoint)) {
+		if (InShadow(info.hitPoint)) {
 			surfaceColour = info.material->ambient;
 		} else {
 			surfaceColour = GetPhongColor(ray, info);
 		}
 
-		// calculate the reflection
-		payload.numBounces += 1;
-		// initialise to the surface color
-		glm::vec3 reflectionColour = surfaceColour;
-
-		glm::vec3 refelectionDirection = ray.direction - 2*(glm::dot(ray.direction, info.normal)) * info.normal;
-		Ray reflectionRayRaw = Ray(info.hitPoint, glm::normalize(refelectionDirection));
-		// adjust for floating point inaccuracies
-		Ray reflectionRay = Ray(reflectionRayRaw(EPSILON), glm::normalize(refelectionDirection));
-
-		if (payload.numBounces < REFLECTION_LIMIT) {
-			float reflectionTime = CastRay(reflectionRay, payload);
-			reflectionColour = payload.color;
-		}
-
-		// merge the reflection and the surface colours
-		float reflectivity = info.material->reflection;
-		payload.color = (reflectivity * reflectionColour) + ((1-reflectivity) * surfaceColour);
+		// mix the reflection and the base colours
+		// glm::vec3 reflectionColour = GetReflectionColor();
+		payload.color = GetReflectionColor(ray, info, payload, surfaceColour);
 		return info.time;
 	}
 
