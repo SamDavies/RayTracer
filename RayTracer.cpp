@@ -8,6 +8,7 @@ const glm::vec3 lightPosition(-150, 300, 10);
 const glm::vec3 lightIntensity(1, 1, 1);
 const float specularIntensity = 10.0;
 const float EPSILON = 0.01;
+const int REFLECTION_LIMIT = 6;
 
 /*
 ** std::vector is a data format similar with list in most of  script language, which allows users to change its size after claiming.
@@ -90,9 +91,9 @@ float CastRay(Ray &ray, Payload &payload) {
 	if (CheckIntersection(ray, info)) {
 
 		IntersectInfo shadowInfo;
-		Ray lightRay = Ray(info.hitPoint, glm::normalize(lightPosition - info.hitPoint));
-		glm::vec3 floatOffset = lightRay(EPSILON); // adjust for floating point inaccuracies
-		Ray shadowRay = Ray(floatOffset, glm::normalize(lightPosition - floatOffset));
+		Ray shadowRayRaw = Ray(info.hitPoint, glm::normalize(lightPosition - info.hitPoint));
+		// adjust for floating point inaccuracies
+		Ray shadowRay = Ray(shadowRayRaw(EPSILON), glm::normalize(lightPosition - shadowRayRaw(EPSILON)));
 
 		// if the object is in shadow then only use ambient light
 		if (CheckIntersection(shadowRay, shadowInfo)) {
@@ -100,7 +101,27 @@ float CastRay(Ray &ray, Payload &payload) {
 			return info.time;
 		}
 
-		payload.color = GetPhongColor(ray, info);
+		// find the surface colour
+		glm::vec3 surfaceColour = GetPhongColor(ray, info);
+
+		// calculate the reflection
+		payload.numBounces += 1;
+		// initialise to the surface color
+		glm::vec3 reflectionColour = surfaceColour;
+
+		glm::vec3 refelectionDirection = ray.direction - 2*(glm::dot(ray.direction, info.normal)) * info.normal;
+		Ray reflectionRayRaw = Ray(info.hitPoint, glm::normalize(refelectionDirection));
+		// adjust for floating point inaccuracies
+		Ray reflectionRay = Ray(reflectionRayRaw(EPSILON), glm::normalize(refelectionDirection));
+
+		if (payload.numBounces < REFLECTION_LIMIT) {
+				float reflectionTime = CastRay(reflectionRay, payload);
+				reflectionColour = payload.color;
+		}
+
+		// merge the reflection and the surface colours
+		float reflectivity = info.material->reflection;
+		payload.color = (reflectivity * reflectionColour) + ((1-reflectivity) * surfaceColour);
 		return info.time;
 	}
 
@@ -179,10 +200,10 @@ int main(int argc, char **argv) {
 	// this can be used as a global transform for every object if I'm feeling lazy
 	glm::mat4 transform1(0.0f);
 
-	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.4, 0.4, 0.4), 20, 0.2);
+	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.4, 0.4, 0.4), 20, 0.0);
 	Sphere sphere1(transform1, glossGreen, glm::vec3(140, -170, -150), 30.0);
 
-	Material whiteWall = Material(glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.0, 0.0, 0.0), 20, 0.2);
+	Material whiteWall = Material(glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.0, 0.0, 0.0), 20, 0.5);
 	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -200), glm::vec3(0, 0, 1));
 	Plane plane2(transform1, whiteWall, glm::vec3(200, 0, 0), glm::vec3(-1, 0, 0));
 	Plane plane3(transform1, whiteWall, glm::vec3(0, -200, 0), glm::vec3(0, 1, 0));
