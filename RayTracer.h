@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream> //Provides facilities for file-based input and output.
 #include <cstring>
+#include <stdio.h>
 
 #include <GLUT/glut.h> //OpenGL Utility Toolkits
 

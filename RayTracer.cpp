@@ -251,18 +251,20 @@ int main(int argc, char **argv) {
 	// this can be used as a global transform for every object if I'm feeling lazy
 	glm::mat4 transform1(0.0f);
 
-
 	Material chrome = Material(glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.8, 0.8, 1.0), 20, 0.0, 0.9, 1.1);
 	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.5, 0.5, 0.5), 30, 0.1, 0, 1.0);
 	Material glossRed = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), 10, 0.2, 0, 0);
+	Material mirrorPink = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.5, 0.7), glm::vec3(0.7, 0.7, 0.7), 10, 0.4, 0, 0);
 	Material shinnyLightBlue = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.3, 0.3, 1.0), glm::vec3(0.2, 0.2, 0.2), 60, 0.3, 0, 1.0);
 	Material whiteWall = Material(glm::vec3(0.3, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), glm::vec3(0.7, 0.7, 0.7), 20, 0.5, 0, 1.0);
 	Material floorGreen = Material(glm::vec3(0.03, 0.03, 0.03), glm::vec3(0.8, 1.0, 0.9), glm::vec3(0.5, 0.5, 0.5), 20, 0.0, 0, 1.0);
 
-	Sphere sphere1(transform1, chrome, glm::vec3(170, -170, -150), 30.0);
+	Sphere sphere1(transform1, chrome, glm::vec3(150, -170, -150), 30.0);
 	Sphere sphere2(transform1, glossRed, glm::vec3(140, -180, -90), 20.0);
 	Sphere sphere3(transform1, glossGreen, glm::vec3(190, -178, -110), 22.0);
 	Sphere sphere4(transform1, shinnyLightBlue, glm::vec3(220, -179, -160), 19.0);
+
+	Triangle triangle(transform1, mirrorPink, glm::vec3(80, -200, -180), glm::vec3(120, -200, -120), glm::vec3(110, -140, -150));
 
 	Plane plane1(transform1, whiteWall, glm::vec3(0, 0, -250), glm::vec3(0, 0, 1));
 	Plane plane2(transform1, whiteWall, glm::vec3(250, 0, 0), glm::vec3(-1, 0, 0));
@@ -275,10 +277,12 @@ int main(int argc, char **argv) {
 	objects.push_back(&sphere3);
 	objects.push_back(&sphere4);
 
+	objects.push_back(&triangle);
+
 	objects.push_back(&plane1);
 	objects.push_back(&plane2);
 	objects.push_back(&floorPlane);
-	// objects.push_back(&roofPlane);
+	objects.push_back(&roofPlane);
 
 	atexit(cleanup);
 	glutMainLoop();

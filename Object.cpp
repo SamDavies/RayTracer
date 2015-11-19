@@ -68,5 +68,33 @@ bool Plane::Intersect(const Ray &ray, IntersectInfo &info) const {
     return false;
 }
 
-/* TODO: Implement */
-bool Triangle::Intersect(const Ray &ray, IntersectInfo &info) const { return -1.0f; }
+bool Triangle::Intersect(const Ray &ray, IntersectInfo &info) const {
+    glm::vec3 normal = glm::normalize(glm::cross(point2 - point1, point3 - point1));
+    // this is the angle between the normal and the ray direction
+    float angle = glm::dot(ray.direction, normal);
+    // if the Triangle is perpendicular to the view then it does not intersect
+    if (angle != 0) {
+        float depth = glm::dot((point1 - ray.origin), normal) / angle;
+        if (depth > 0) {
+            glm::vec3 hitPoint = ray.origin + depth * ray.direction;
+
+            glm::vec3 hit1 =  hitPoint - point1;
+            glm::vec3 hit2 =  hitPoint - point2;
+            glm::vec3 hit3 =  hitPoint - point3;
+
+            // check if the ray was on the inside of each line of the triangle
+            float determinant1 = glm::dot(normal, glm::cross(point2 - point1, hit1));
+            float determinant2 = glm::dot(normal, glm::cross(point3 - point2, hit2));
+            float determinant3 = glm::dot(normal, glm::cross(point1 - point3, hit3));
+
+            if(determinant1 >= 0 && determinant2 >= 0 && determinant3 >= 0) {
+                info.hitPoint = hitPoint;
+                info.normal = normal;
+                info.material = MaterialPtr();
+                info.time = glm::length(ray.origin - info.hitPoint);
+                return true;
+            }
+        }
+    }
+    return false;
+}

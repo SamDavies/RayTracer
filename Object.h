@@ -64,12 +64,21 @@ class Plane : public Object {
       , point(pt)
       , normal(glm::normalize(norm))
       {}
-
     virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;
 };
 
-/* TODO: Implement */
 class Triangle : public Object {
-  public:
-    virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;
+    glm::vec3 point1;
+    glm::vec3 point2;
+    glm::vec3 point3;
+
+    public:
+        // Need to make sure the points are in clockwise order
+        Triangle(const glm::mat4 &transform, const Material &material, glm::vec3 pt1, glm::vec3 pt2, glm::vec3 pt3)
+            : Object(transform, material)
+            , point1(pt1)
+            , point2(pt2)
+            , point3(pt3)
+            {}
+        virtual bool Intersect(const Ray &ray, IntersectInfo &info) const;
 };
