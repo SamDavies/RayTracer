@@ -115,6 +115,38 @@ glm::vec3 GetReflectionColor(const Ray &ray, const IntersectInfo &info, Payload 
 	return surfaceColour;
 }
 
+glm::vec3 GetRefractionColor(const Ray &ray, const IntersectInfo &info, Payload &payload, const glm::vec3 surfaceColour) {
+	if (info.material->refraction <= 0) {
+		return surfaceColour;
+	}
+
+	float refractionRatio;
+	if(payload.currentRefractiveIndex == 1){
+		refractionRatio = payload.currentRefractiveIndex / (float) info.material->refractiveIndex;
+		payload.currentRefractiveIndex = info.material->refractiveIndex; //When entering set to the refraction index of the object
+	} else {
+		return surfaceColour;
+	}
+
+	// Compute the direction of the refraction ray
+	float bendedDirection =  1.0f - powf(refractionRatio,2) * (1.0f - powf(glm::dot(info.normal,-ray.direction),2));
+	float refraction;
+	if (bendedDirection >= 0) {
+		glm::vec3 refrDir = (float) (refractionRatio * (glm::dot(info.normal,-ray.direction)) - sqrtf(bendedDirection))
+				* info.normal - refractionRatio * (-ray.direction);
+
+		Ray preOffsetRefrRay = Ray(info.hitPoint, refrDir);
+		Ray rayRefr = Ray(preOffsetRefrRay(EPSILON), refrDir);
+
+		CastRay(rayRefr, payload);
+		refraction = info.material->refraction;
+	} else {
+		refraction = 0;
+	}
+
+	return (refraction * payload.color) + ((1-refraction) * surfaceColour);
+}
+
 /*
 ** Recursive ray-casting function. It might be the most important Function in this demo cause it's the one decides the color of pixels.
 ** This function is called for each pixel, and each time a ray is reflected/used
@@ -138,8 +170,9 @@ float CastRay(Ray &ray, Payload &payload) {
 		}
 
 		// mix the reflection and the base colours
-		// glm::vec3 reflectionColour = GetReflectionColor();
-		payload.color = GetReflectionColor(ray, info, payload, surfaceColour);
+		glm::vec3 reflectionColour = GetReflectionColor(ray, info, payload, surfaceColour);
+		payload.color = GetRefractionColor(ray, info, payload, reflectionColour);
+
 		return info.time;
 	}
 
@@ -219,14 +252,14 @@ int main(int argc, char **argv) {
 	glm::mat4 transform1(0.0f);
 
 
-	Material chrome = Material(glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.8, 0.8, 1.0), 20, 0.75);
-	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.5, 0.5, 0.5), 30, 0.1);
-	Material glossRed = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), 10, 0.2);
-	Material shinnyLightBlue = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.3, 0.3, 1.0), glm::vec3(0.2, 0.2, 0.2), 60, 0.3);
-	Material whiteWall = Material(glm::vec3(0.3, 0.3, 0.4), glm::vec3(0.78, 0.78, 0.8), glm::vec3(0.78, 0.78, 0.8), 20, 0.6);
-	Material floorGreen = Material(glm::vec3(0.03, 0.03, 0.03), glm::vec3(0.8, 1.0, 0.9), glm::vec3(0.5, 0.5, 0.5), 20, 0.0);
+	Material chrome = Material(glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.8, 0.8, 1.0), 20, 0.0, 0.9, 1.1);
+	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.5, 0.5, 0.5), 30, 0.1, 0, 1.0);
+	Material glossRed = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), 10, 0.2, 0, 0);
+	Material shinnyLightBlue = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.3, 0.3, 1.0), glm::vec3(0.2, 0.2, 0.2), 60, 0.3, 0, 1.0);
+	Material whiteWall = Material(glm::vec3(0.3, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), glm::vec3(0.7, 0.7, 0.7), 20, 0.5, 0, 1.0);
+	Material floorGreen = Material(glm::vec3(0.03, 0.03, 0.03), glm::vec3(0.8, 1.0, 0.9), glm::vec3(0.5, 0.5, 0.5), 20, 0.0, 0, 1.0);
 
-	Sphere sphere1(transform1, chrome, glm::vec3(140, -170, -150), 30.0);
+	Sphere sphere1(transform1, chrome, glm::vec3(170, -170, -150), 30.0);
 	Sphere sphere2(transform1, glossRed, glm::vec3(140, -180, -90), 20.0);
 	Sphere sphere3(transform1, glossGreen, glm::vec3(190, -178, -110), 22.0);
 	Sphere sphere4(transform1, shinnyLightBlue, glm::vec3(220, -179, -160), 19.0);

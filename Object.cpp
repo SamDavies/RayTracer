@@ -5,7 +5,9 @@ Material::Material():
     diffuse(1.0f),
     specular(1.0f),
     glossiness(10.0f),
-    reflection(0.0f)
+    reflection(0.0f),
+    refraction(0.0f),
+    refractiveIndex(0.0f)
   {}
 
 Object::Object(const glm::mat4 &transform, const Material &material):

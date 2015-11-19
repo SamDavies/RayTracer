@@ -5,14 +5,16 @@
 class Material {
   public:
     Material();
-    glm::vec3 ambient; //Reflectivity in r/g/b channels
+    glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
     float glossiness; //Specular intensity
     float reflection;
+    float refraction;
+    float refractiveIndex;
 
-    Material(glm::vec3 amb, glm::vec3 diff, glm::vec3 spec, float gloss, float refl)
-      :ambient(amb) ,diffuse(diff) ,specular(spec) ,glossiness(gloss) ,reflection(refl)
+    Material(glm::vec3 amb, glm::vec3 diff, glm::vec3 spec, float gloss, float refl, float refr, float refrIndex)
+      :ambient(amb) ,diffuse(diff) ,specular(spec) ,glossiness(gloss) ,reflection(refl), refraction(refr), refractiveIndex(refrIndex)
       {}
 };
 
