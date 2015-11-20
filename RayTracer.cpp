@@ -116,17 +116,12 @@ glm::vec3 GetReflectionColor(const Ray &ray, const IntersectInfo &info, Payload 
 }
 
 glm::vec3 GetRefractionColor(const Ray &ray, const IntersectInfo &info, Payload &payload, const glm::vec3 surfaceColour) {
-	if (info.material->refraction <= 0) {
+	if (info.material->refraction <= 0 || payload.currentRefractiveIndex != 1) {
 		return surfaceColour;
 	}
 
-	float refractionRatio;
-	if(payload.currentRefractiveIndex == 1){
-		refractionRatio = payload.currentRefractiveIndex / (float) info.material->refractiveIndex;
-		payload.currentRefractiveIndex = info.material->refractiveIndex; //When entering set to the refraction index of the object
-	} else {
-		return surfaceColour;
-	}
+	float refractionRatio = -payload.currentRefractiveIndex / (float) info.material->refractiveIndex;
+	payload.currentRefractiveIndex = info.material->refractiveIndex;
 
 	// Compute the direction of the refraction ray
 	float bendedDirection =  1.0f - powf(refractionRatio,2) * (1.0f - powf(glm::dot(info.normal,-ray.direction),2));
@@ -135,8 +130,8 @@ glm::vec3 GetRefractionColor(const Ray &ray, const IntersectInfo &info, Payload 
 		glm::vec3 refrDir = (float) (refractionRatio * (glm::dot(info.normal,-ray.direction)) - sqrtf(bendedDirection))
 				* info.normal - refractionRatio * (-ray.direction);
 
-		Ray preOffsetRefrRay = Ray(info.hitPoint, refrDir);
-		Ray rayRefr = Ray(preOffsetRefrRay(EPSILON), refrDir);
+		Ray refrRayRaw = Ray(info.hitPoint, refrDir);
+		Ray rayRefr = Ray(refrRayRaw(EPSILON), refrDir);
 
 		CastRay(rayRefr, payload);
 		refraction = info.material->refraction;
@@ -251,7 +246,7 @@ int main(int argc, char **argv) {
 	// this can be used as a global transform for every object if I'm feeling lazy
 	glm::mat4 transform1(0.0f);
 
-	Material chrome = Material(glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.8, 0.8, 1.0), 20, 0.0, 0.7, 1.1);
+	Material chrome = Material(glm::vec3(0.01, 0.01, 0.01), glm::vec3(0.9, 0.9, 0.9), glm::vec3(0.8, 0.8, 1.0), 20, 0.0, 0.7, 1.4);
 	Material glossGreen = Material(glm::vec3(0.01, 0.05, 0.02), glm::vec3(0.4, 0.6, 0.3), glm::vec3(0.5, 0.5, 0.5), 30, 0.1, 0, 1.0);
 	Material glossRed = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.3, 0.3), glm::vec3(0.7, 0.7, 0.7), 10, 0.2, 0, 0);
 	Material mirrorPink = Material(glm::vec3(0.05, 0.03, 0.03), glm::vec3(1.0, 0.5, 0.7), glm::vec3(0.7, 0.7, 0.7), 10, 0.4, 0, 0);
